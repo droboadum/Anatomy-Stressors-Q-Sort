@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Anatomy Stressors Q-Sort</title>
+<style>
+  :root { --gap: 10px; --card-pad: 10px; --col-w: 180px; }
+  body { font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; }
+  h1 { margin: 0 0 6px 0; font-size: 22px; }
+  .sub { color:#555; margin: 0 0 14px 0; }
+  .wrap { display:flex; gap:var(--gap); align-items:flex-start; flex-wrap:wrap; }
+  .left, .right { flex:1 1 320px; }
+  .pool, .grid { border:1px solid #ddd; border-radius:8px; padding:12px; background:#fafafa; }
+  .pool { min-height: 120px; }
+  .cards { display:flex; flex-wrap:wrap; gap:var(--gap); }
+  .card {
+    background:#fff; border:1px solid #ddd; border-radius:8px; padding:var(--card-pad);
+    width: calc(50% - var(--gap)/2); cursor:grab; user-select:none;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  }
+  .card:active { cursor:grabbing; }
+  .grid { overflow:auto; }
+  .cols { display:flex; gap:var(--gap); }
+  .col {
+    width: var(--col-w); min-height: 240px; background:#fff; border:1px dashed #bbb;
+    border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:8px;
+  }
+  .col.dragover { background:#f0f7ff; border-color:#5a9bff; }
+  .col-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; }
+  .badge { font-size:12px; padding:2px 6px; border-radius:999px; background:#eef4ff; border:1px solid #cfe0ff; }
+  .tiny { font-size:12px; color:#666; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
+  button {
+    border:1px solid #1f7aed; background:#2a84ff; color:#fff; padding:10px 14px; border-radius:8px;
+    font-weight:600; cursor:pointer;
+  }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .note { background:#fff9e6; border:1px solid #ffe7a3; padding:10px; border-radius:8px; }
+</style>
+</head>
+<body>
+  <h1>Anatomy Stressors Q-Sort</h1>
+  <p class="sub">Sort the 43 statements from <b>–4 = least characteristic of my stress</b> to <b>+4 = most characteristic</b>. Each column shows its required count—fill exactly.</p>
+
+  <div class="wrap">
+    <div class="left">
+      <div class="pool">
+        <div class="row">
+          <strong>Unsorted Statements</strong>
+          <span id="poolCount" class="badge">loading…</span>
+        </div>
+        <div id="pool" class="cards" aria-label="unsorted pool"></div>
+        <p class="tiny">Drag a card into any column. You can drag between columns or back to the pool.</p>
+      </div>
+      <div style="height:12px"></div>
+      <div class="note tiny">
+        <b>Tip:</b> If a column is full, drop is blocked. Empty space means you still need to place cards there.
+      </div>
+      <div style="height:12px"></div>
+      <div class="row">
+        <button id="downloadBtn" disabled>Download CSV</button>
+        <span class="tiny" id="status">Place all cards to enable download.</span>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="grid">
+        <div class="row"><strong>Q Grid (–4 → +4)</strong></div>
+        <div id="cols" class="cols"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ----- Configuration ----- */
+const scaleLabels = [-4,-3,-2,-1,0,1,2,3,4];
+const distribution = [3,4,5,6,7,6,5,4,3]; // must sum to 43
+const csvPath = 'statements.csv';         // already in your repo
+
+/* ----- State ----- */
+let statements = [];     // [{id,text}]
+let placements = {};     // statementId -> columnIndex or 'pool'
+
+/* ----- Helpers ----- */
+function el(tag, attrs={}, ...children){
+  const x = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='class') x.className = v;
+    else if(k==='html') x.innerHTML = v;
+    else x.setAttribute(k,v);
+  });
+  children.forEach(c => x.append(c));
+  return x;
+}
+
+async function loadCSV(path){
+  const res = await fetch(path);
+  if(!res.ok) throw new Error('Could not load statements.csv');
+  const txt = await res.text();
+  const rows = txt.trim().split(/\r?\n/);
+  const out = [];
+  for(let i=1;i<rows.length;i++){
+    const line = rows[i];
+    // simple split on first comma: id,text (your texts have no commas)
+    const idx = line.indexOf(',');
+    const id = line.slice(0, idx).trim();
+    const text = line.slice(idx+1).trim();
+    if(id && text) out.push({ id, text });
+  }
+  return out;
+}
+
+function updatePoolCount(){
+  const poolCount = Object.values(placements).filter(v => v==='pool').length;
+  document.getElementById('poolCount').textContent = poolCount + ' remaining';
+}
+
+function canDrop(colIndex){
+  const current = Object.values(placements).filter(v => v===colIndex).length;
+  return current < distribution[colIndex];
+}
+
+function allPlaced(){
+  return Object.values(placements).every(v => v!=='pool');
+}
+
+function refreshDownloadState(){
+  const btn = document.getElementById('downloadBtn');
+  const st = document.getElementById('status');
+  if(allPlaced()){
+    btn.disabled = false;
+    st.textContent = 'All set. Click “Download CSV” to save your sort.';
+  } else {
+    btn.disabled = true;
+    st.textContent = 'Place all cards to enable download.';
+  }
+}
+
+function makeCard(s){
+  const c = el('div', {class:'card', draggable:'true', 'data-id':s.id});
+  c.textContent = s.text;
+  c.addEventListener('dragstart', e=>{
+    e.dataTransfer.setData('text/plain', s.id);
+  });
+  return c;
+}
+
+function attachDnDZones(){
+  // pool
+  const pool = document.getElementById('pool');
+  pool.addEventListener('dragover', e=>{ e.preventDefault(); pool.classList.add('dragover'); });
+  pool.addEventListener('dragleave', ()=> pool.classList.remove('dragover'));
+  pool.addEventListener('drop', e=>{
+    e.preventDefault(); pool.classList.remove('dragover');
+    const id = e.dataTransfer.getData('text/plain');
+    const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
+    if(card){ pool.append(card); placements[id] = 'pool'; updatePoolCount(); refreshDownloadState(); }
+  });
+
+  // columns
+  document.querySelectorAll('.col').forEach((col, colIndex)=>{
+    col.addEventListener('dragover', e=>{
+      if(canDrop(colIndex)){ e.preventDefault(); col.classList.add('dragover'); }
+    });
+    col.addEventListener('dragleave', ()=> col.classList.remove('dragover'));
+    col.addEventListener('drop', e=>{
+      e.preventDefault(); col.classList.remove('dragover');
+      const id = e.dataTransfer.getData('text/plain');
+      if(!canDrop(colIndex)) return; // block if full
+      const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
+      if(card){ col.append(card); placements[id] = colIndex; updatePoolCount(); refreshDownloadState(); updateColBadges(); }
+    });
+  });
+}
+
+function updateColBadges(){
+  document.querySelectorAll('.col').forEach((col, idx)=>{
+    const have = Array.from(col.querySelectorAll('.card')).length;
+    const need = distribution[idx];
+    col.querySelector('.badge').textContent = `${have}/${need}`;
+  });
+}
+
+function downloadCSV(){
+  // columns −4..+4; pool becomes blank
+  const header = 'id,rank\n';
+  let lines = statements.map(s=>{
+    const p = placements[s.id];
+    const rank = (typeof p === 'number') ? scaleLabels[p] : '';
+    return `${s.id},${rank}`;
+  }).join('\n');
+  const blob = new Blob([header + lines], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = el('a', {href:url, download:'qsort_results.csv'});
+  document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+/* ----- Init ----- */
+(async function(){
+  try{
+    statements = await loadCSV(csvPath);
+  }catch(err){
+    alert('Error loading statements.csv. Make sure it exists in the repo root.\n' + err.message);
+    return;
+  }
+
+  // initial placements: all in pool
+  statements.forEach(s => placements[s.id] = 'pool');
+
+  // build columns
+  const colsWrap = document.getElementById('cols');
+  scaleLabels.forEach((label, i)=>{
+    const head = el('div', {class:'col-head'},
+      el('div', {}, el('strong', {html: (label>0?'+':'') + label})),
+      el('span', {class:'badge'}, `0/${distribution[i]}`)
+    );
+    const col = el('div', {class:'col', 'data-col': i}, head);
+    colsWrap.append(col);
+  });
+
+  // fill pool with cards
+  const pool = document.getElementById('pool');
+  statements.forEach(s => pool.append( makeCard(s) ));
+  updatePoolCount();
+
+  attachDnDZones();
+  updateColBadges();
+
+  document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
+})();
+</script>
+</body>
+</html>
