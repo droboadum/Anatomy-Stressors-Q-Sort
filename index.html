@@ -61,6 +61,13 @@
       <div class="row">
         <button id="downloadBtn" disabled>Download CSV</button>
         <span class="tiny" id="status">Place all cards to enable download.</span>
+        <div class="row" style="margin-top:20px;">
+  <label for="pidInput"><b>Enter Participant ID:</b></label>
+  <input id="pidInput" type="text" placeholder="e.g., P1234" style="padding:6px; margin:6px; border:1px solid #ccc; border-radius:4px;">
+  <button id="submitQualtricsBtn" disabled>Submit to Qualtrics</button>
+</div>
+<p class="tiny">Submitting will send your Q-sort results directly back into the Qualtrics survey.</p>
+
       </div>
     </div>
 
@@ -126,15 +133,18 @@ function allPlaced(){
 }
 
 function refreshDownloadState(){
-  const btn = document.getElementById('downloadBtn');
-  const st = document.getElementById('status');
-  if(allPlaced()){
-    btn.disabled = false;
-    st.textContent = 'All set. Click “Download CSV” to save your sort.';
-  } else {
-    btn.disabled = true;
-    st.textContent = 'Place all cards to enable download.';
-  }
+  const btn  = document.getElementById('downloadBtn');
+  const qbtn = document.getElementById('submitQualtricsBtn');
+  const st   = document.getElementById('status');
+
+  const ready = allPlaced();
+
+  btn.disabled = !ready;
+  if (qbtn) qbtn.disabled = !ready;
+
+  st.textContent = ready
+    ? 'All set. You can download CSV or submit directly to Qualtrics.'
+    : 'Place all cards to enable download/submit.';
 }
 
 function makeCard(s){
@@ -228,7 +238,44 @@ function downloadCSV(){
   updateColBadges();
 
   document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
+  document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
+
+// === Qualtrics Redirect Settings ===
+const QUALTRICS_BASE = "https://shsu.co1.qualtrics.com/jfe/form/SV_9mLZQw7T45q9bcW";
+
+// Build query string and redirect
+function submitToQualtrics(){
+  if(!allPlaced()){ 
+    alert("Please place all cards before submitting to Qualtrics."); 
+    return; 
+  }
+  const pid = (document.getElementById('pidInput').value || '').trim();
+  if(!pid){ 
+    alert("Please enter a Participant ID before submitting."); 
+    return; 
+  }
+
+  const params = new URLSearchParams();
+  params.set('pid', pid);
+
+  // Loop through all 43 statements and capture ranks
+  for(let i=1; i<=43; i++){
+    const key = String(i);
+    const place = placements[key];
+    const rank = (typeof place === 'number') ? scaleLabels[place] : '';
+    params.set('S'+i, rank);
+  }
+
+  // Redirect into Qualtrics survey
+  const url = QUALTRICS_BASE + "?" + params.toString();
+  window.location.href = url;
+}
+
+// Hook up Qualtrics button
+document.getElementById('submitQualtricsBtn').addEventListener('click', submitToQualtrics);
+
 })();
 </script>
 </body>
 </html>
+
