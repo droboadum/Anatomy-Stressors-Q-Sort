@@ -9,8 +9,43 @@
   body { font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; }
   h1 { margin: 0 0 6px 0; font-size: 22px; }
   .sub { color:#555; margin: 0 0 14px 0; }
-  .wrap { display:flex; gap:var(--gap); align-items:flex-start; flex-wrap:wrap; }
-  .left, .right { flex:1 1 320px; }
+  ..wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;   /* adds some space between left and right */
+}
+
+/* Make the left column scrollable while keeping the grid visible */
+.left {
+  flex: 0 0 45%;
+  max-width: 45%;
+  max-height: 75vh;        /* adjust if you want taller/shorter */
+  overflow: auto;          /* adds a scrollbar when needed */
+  padding-right: 8px;      /* space for scrollbar */
+}
+
+/* Keep the grid aligned at the top */
+.right {
+  flex: 0 0 50%;           
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* keeps grid at top */
+}
+
+/* Mobile-friendly: stack columns on narrow screens */
+@media (max-width: 900px) {
+  .wrap {
+    flex-direction: column;
+  }
+  .left, .right {
+    max-width: 100%;
+    flex: 0 0 auto;
+  }
+}
+
   .pool, .grid { border:1px solid #ddd; border-radius:8px; padding:12px; background:#fafafa; }
   .pool { min-height: 120px; }
   .cards { display:flex; flex-wrap:wrap; gap:var(--gap); }
@@ -20,12 +55,48 @@
     box-shadow: 0 1px 2px rgba(0,0,0,.05);
   }
   .card:active { cursor:grabbing; }
-  .grid { overflow:auto; }
-  .cols { display:flex; gap:var(--gap); }
-  .col {
-    width: var(--col-w); min-height: 240px; background:#fff; border:1px dashed #bbb;
-    border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:8px;
+  .grid { 
+  overflow-x: hidden;   /* prevent horizontal scrolling */
+  overflow-y: auto;     /* allow vertical scroll if needed */
+}
+
+.cols { 
+  display: flex; 
+  gap: var(--gap); 
+}
+
+.col {
+  width: var(--col-w);
+  min-height: 240px;
+  background: #fff;
+  border: 1px dashed #bbb;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Mobile-friendly: shrink columns instead of forcing horizontal scroll */
+@media (max-width: 900px) {
+  .cols {
+    flex-wrap: wrap;           /* allow wrapping on small screens */
   }
+  .col {
+    flex: 1 1 100px;           /* shrink to fit, but don’t collapse */
+    min-width: 120px;          /* minimum safe width for readability */
+    max-width: 1fr;            /* allow them to share space evenly */
+  }
+  /* Extra small screens: one column per row */
+@media (max-width: 600px) {
+  .col {
+    flex: 1 1 100%;       /* take full row width */
+    max-width: 100%;      /* ensure no side-by-side columns */
+    min-width: unset;     /* allow full stretch */
+    max-height: 70vh;     /* keep within 70% of viewport height */
+    overflow-y: auto;     /* add scroll if content exceeds height */
+  }
+}
   .col.dragover { background:#f0f7ff; border-color:#5a9bff; }
   .col-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; }
   .badge { font-size:12px; padding:2px 6px; border-radius:999px; background:#eef4ff; border:1px solid #cfe0ff; }
