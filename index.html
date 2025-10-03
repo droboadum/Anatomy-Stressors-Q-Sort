@@ -33,18 +33,26 @@
   }
   .card:active { cursor:grabbing; }
 
+  /* GRID */
   .grid { overflow-x:hidden; overflow-y:auto; }
-  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
-  .row-label { width:100%; font-weight:bold; font-size:14px; color:#444; margin:12px 0 6px 0; }
+  .grid-sticky {
+    position: sticky; top: 0;
+    background: #f5faff;
+    border: 1px solid #d6e6ff;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  .grid-sticky b { font-weight: 700; }
 
-  /* flexible column system */
-  .cols { --cols: 5; display:flex; flex-wrap:wrap; gap:var(--gap); }
-  .cols-5 { --cols: 5; }
-  .cols-4 { --cols: 4; }
+  .rows { display:flex; flex-direction:column; gap:20px; }
+  .row-label { font-weight:bold; font-size:14px; color:#444; margin:6px 0; text-align:center; }
+
+  .row-cols { display:flex; gap:var(--gap); justify-content:center; flex-wrap:wrap; }
 
   .col {
-    flex: 0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
-    width: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    width: var(--col-w);
     min-height: 240px;
     background:#fff; border:1px dashed #bbb; border-radius:8px; padding:8px;
     display:flex; flex-direction:column; gap:8px;
@@ -53,15 +61,14 @@
   .col-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; }
   .badge { font-size:12px; padding:2px 6px; border-radius:999px; background:#eef4ff; border:1px solid #cfe0ff; }
   .tiny { font-size:12px; color:#666; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
 
-  /* tablet: ~3 columns per row */
+  /* responsive: columns scale down nicely */
   @media (max-width: 1024px) {
-    .cols { --cols: 3; }
+    .col { width: 150px; }
   }
-  /* phone: 1 column per row */
   @media (max-width: 600px) {
-    .cols { --cols: 1; }
-    .col { min-height: 180px; }
+    .col { width: 100%; min-height: 180px; }
   }
 
   button {
@@ -113,16 +120,20 @@
       <p class="tiny">Submitting will send your Q-sort results directly back into the Qualtrics survey.</p>
     </div>
 
-    <!-- RIGHT: Q-grid (two containers with headers) -->
+    <!-- RIGHT: Q-grid in two rows with sticky instructions -->
     <div class="right">
       <div class="grid">
-        <div class="row"><strong>Q Grid (–4 → +4)</strong></div>
+        <div class="grid-sticky">
+          <b>How to rank:</b> −4 = <i>least characteristic of my stress</i> &nbsp;→&nbsp;
+          +4 = <i>most characteristic</i>. Place exactly the required number in each column.
+        </div>
 
-        <div class="row-label">Negative to Neutral (−4 → 0)</div>
-        <div id="colsNeg" class="cols cols-5"></div>
-
-        <div class="row-label">Positive (+1 → +4)</div>
-        <div id="colsPos" class="cols cols-4"></div>
+        <div id="gridRows" class="rows">
+          <!-- JS will inject:
+               Row 1 label + columns for −4…0
+               Row 2 label + columns for +1…+4
+          -->
+        </div>
       </div>
     </div>
   </div>
@@ -262,11 +273,12 @@ function downloadCSV(){
   // initial placements: all in pool
   statements.forEach(s => placements[s.id] = 'pool');
 
-  // Build columns into two containers
-  const colsNeg = document.getElementById('colsNeg'); // -4..0 (5 columns)
-  const colsPos = document.getElementById('colsPos'); // +1..+4 (4 columns)
+  // build 2-row grid
+  const gridRows = document.getElementById('gridRows');
 
-  // negative/neutral indices 0..4
+  // Row 1: −4 … 0
+  const row1Label = el('div', {class:'row-label'}, 'Negative to Neutral (−4 → 0)');
+  const row1Cols  = el('div', {class:'row-cols'});
   for (let i = 0; i <= 4; i++) {
     const label = scaleLabels[i];
     const head = el('div', {class:'col-head'},
@@ -274,9 +286,13 @@ function downloadCSV(){
       el('span', {class:'badge'}, `0/${distribution[i]}`)
     );
     const col = el('div', {class:'col', 'data-col': i}, head);
-    colsNeg.append(col);
+    row1Cols.append(col);
   }
-  // positive indices 5..8
+  gridRows.append(row1Label, row1Cols);
+
+  // Row 2: +1 … +4
+  const row2Label = el('div', {class:'row-label'}, 'Positive (+1 → +4)');
+  const row2Cols  = el('div', {class:'row-cols'});
   for (let i = 5; i <= 8; i++) {
     const label = scaleLabels[i];
     const head = el('div', {class:'col-head'},
@@ -284,8 +300,9 @@ function downloadCSV(){
       el('span', {class:'badge'}, `0/${distribution[i]}`)
     );
     const col = el('div', {class:'col', 'data-col': i}, head);
-    colsPos.append(col);
+    row2Cols.append(col);
   }
+  gridRows.append(row2Label, row2Cols);
 
   // fill pool with cards
   const pool = document.getElementById('pool');
