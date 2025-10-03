@@ -50,13 +50,51 @@
   .card:active { cursor:grabbing; }
 
   .grid { overflow-x: hidden; overflow-y: auto; }
-  .cols { display:flex; gap:var(--gap); }
+  /* Two-row grid: 5 columns per row on desktop */
+.cols {
+  display: flex;
+  flex-wrap: wrap;      /* allow wrapping to a second row */
+  gap: var(--gap);
+}
+
+/* Exactly 5 columns per row on wide screens */
+.col {
+  flex: 0 0 calc((100% - 4*var(--gap)) / 5);  /* 5 equal columns */
+  width: calc((100% - 4*var(--gap)) / 5);
+  min-height: 240px;
+  background:#fff;
+  border:1px dashed #bbb;
+  border-radius:8px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* Put some breathing room between the two rows */
+.col:nth-child(n+6) {  /* columns 6–9 (i.e., +1 to +4) */
+  margin-top: var(--gap);
+}
+
+/* Tablet: ~3 columns per row */
+@media (max-width: 1024px) {
   .col {
-    width: var(--col-w);
-    min-height: 240px;
-    background:#fff; border:1px dashed #bbb; border-radius:8px; padding:8px;
-    display:flex; flex-direction:column; gap:8px;
+    flex: 0 0 calc((100% - 2*var(--gap)) / 3); /* 3 per row */
+    width: calc((100% - 2*var(--gap)) / 3);
   }
+  .col:nth-child(n+4) { margin-top: var(--gap); } /* start second row after 3 */
+}
+
+/* Phone: 1 column per row (easy to drag) */
+@media (max-width: 600px) {
+  .col {
+    flex: 0 0 100%;
+    width: 100%;
+    min-height: 180px;
+  }
+  .col:nth-child(n+2) { margin-top: var(--gap); } /* spacing between rows */
+}
+
   .col.dragover { background:#f0f7ff; border-color:#5a9bff; }
   .col-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; }
   .badge { font-size:12px; padding:2px 6px; border-radius:999px; background:#eef4ff; border:1px solid #cfe0ff; }
