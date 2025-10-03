@@ -12,94 +12,57 @@
   .sub { color:#555; margin: 0 0 14px 0; }
 
   /* side-by-side layout */
-  .wrap {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 20px;
-  }
-  .left {
-    flex: 0 0 45%;
-    max-width: 45%;
-    max-height: 75vh;
-    overflow: auto;
-    padding-right: 8px;
-  }
-  .right {
-    flex: 1 1 55%;
-    max-width: 55%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  .wrap { display:flex; flex-direction:row; align-items:flex-start; gap:20px; }
+  .left { flex:0 0 45%; max-width:45%; max-height:75vh; overflow:auto; padding-right:8px; }
+  .right { flex:1 1 55%; max-width:55%; display:flex; flex-direction:column; align-items:flex-start; }
 
   /* stack on narrow screens */
   @media (max-width: 900px) {
-    .wrap { flex-direction: column; }
-    .left, .right { max-width: 100%; flex: 0 0 auto; }
+    .wrap { flex-direction:column; }
+    .left, .right { max-width:100%; flex:0 0 auto; }
   }
 
   .pool, .grid { border:1px solid #ddd; border-radius:8px; padding:12px; background:#fafafa; }
-  .pool { min-height: 120px; }
+  .pool { min-height:120px; }
   .cards { display:flex; flex-wrap:wrap; gap:var(--gap); }
+
   .card {
     background:#fff; border:1px solid #ddd; border-radius:8px; padding:var(--card-pad);
     width: calc(50% - var(--gap)/2); cursor:grab; user-select:none;
-    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    box-shadow:0 1px 2px rgba(0,0,0,.05);
   }
   .card:active { cursor:grabbing; }
 
-  .grid { overflow-x: hidden; overflow-y: auto; }
-  /* Two-row grid: 5 columns per row on desktop */
-.cols {
-  display: flex;
-  flex-wrap: wrap;      /* allow wrapping to a second row */
-  gap: var(--gap);
-}
+  .grid { overflow-x:hidden; overflow-y:auto; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
+  .row-label { width:100%; font-weight:bold; font-size:14px; color:#444; margin:12px 0 6px 0; }
 
-/* Exactly 5 columns per row on wide screens */
-.col {
-  flex: 0 0 calc((100% - 4*var(--gap)) / 5);  /* 5 equal columns */
-  width: calc((100% - 4*var(--gap)) / 5);
-  min-height: 240px;
-  background:#fff;
-  border:1px dashed #bbb;
-  border-radius:8px;
-  padding:8px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
+  /* flexible column system */
+  .cols { --cols: 5; display:flex; flex-wrap:wrap; gap:var(--gap); }
+  .cols-5 { --cols: 5; }
+  .cols-4 { --cols: 4; }
 
-/* Put some breathing room between the two rows */
-.col:nth-child(n+6) {  /* columns 6–9 (i.e., +1 to +4) */
-  margin-top: var(--gap);
-}
-
-/* Tablet: ~3 columns per row */
-@media (max-width: 1024px) {
   .col {
-    flex: 0 0 calc((100% - 2*var(--gap)) / 3); /* 3 per row */
-    width: calc((100% - 2*var(--gap)) / 3);
+    flex: 0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    width: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    min-height: 240px;
+    background:#fff; border:1px dashed #bbb; border-radius:8px; padding:8px;
+    display:flex; flex-direction:column; gap:8px;
   }
-  .col:nth-child(n+4) { margin-top: var(--gap); } /* start second row after 3 */
-}
-
-/* Phone: 1 column per row (easy to drag) */
-@media (max-width: 600px) {
-  .col {
-    flex: 0 0 100%;
-    width: 100%;
-    min-height: 180px;
-  }
-  .col:nth-child(n+2) { margin-top: var(--gap); } /* spacing between rows */
-}
-
   .col.dragover { background:#f0f7ff; border-color:#5a9bff; }
   .col-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; }
   .badge { font-size:12px; padding:2px 6px; border-radius:999px; background:#eef4ff; border:1px solid #cfe0ff; }
   .tiny { font-size:12px; color:#666; }
-  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
+
+  /* tablet: ~3 columns per row */
+  @media (max-width: 1024px) {
+    .cols { --cols: 3; }
+  }
+  /* phone: 1 column per row */
+  @media (max-width: 600px) {
+    .cols { --cols: 1; }
+    .col { min-height: 180px; }
+  }
 
   button {
     border:1px solid #1f7aed; background:#2a84ff; color:#fff; padding:10px 14px; border-radius:8px;
@@ -150,11 +113,16 @@
       <p class="tiny">Submitting will send your Q-sort results directly back into the Qualtrics survey.</p>
     </div>
 
-    <!-- RIGHT: Q-grid -->
+    <!-- RIGHT: Q-grid (two containers with headers) -->
     <div class="right">
       <div class="grid">
         <div class="row"><strong>Q Grid (–4 → +4)</strong></div>
-        <div id="cols" class="cols"></div>
+
+        <div class="row-label">Negative to Neutral (−4 → 0)</div>
+        <div id="colsNeg" class="cols cols-5"></div>
+
+        <div class="row-label">Positive (+1 → +4)</div>
+        <div id="colsPos" class="cols cols-4"></div>
       </div>
     </div>
   </div>
@@ -162,8 +130,8 @@
 <script>
 /* ----- Configuration ----- */
 const scaleLabels = [-4,-3,-2,-1,0,1,2,3,4];
-const distribution = [3,4,5,6,7,6,5,4,3]; // must sum to 43
-const csvPath = 'statements.csv';         // keep in same directory
+const distribution = [3,4,5,6,7, 6,5,4,3]; // -4..+4 must sum to 43
+const csvPath = 'statements.csv';
 
 /* ----- State ----- */
 let statements = [];     // [{id,text}]
@@ -215,12 +183,9 @@ function refreshDownloadState(){
   const btn  = document.getElementById('downloadBtn');
   const qbtn = document.getElementById('submitQualtricsBtn');
   const st   = document.getElementById('status');
-
   const ready = allPlaced();
-
   btn.disabled = !ready;
   if (qbtn) qbtn.disabled = !ready;
-
   st.textContent = ready
     ? 'All set. You can download CSV or submit directly to Qualtrics.'
     : 'Place all cards to enable download/submit.';
@@ -236,6 +201,7 @@ function makeCard(s){
 }
 
 function attachDnDZones(){
+  // Pool
   const pool = document.getElementById('pool');
   pool.addEventListener('dragover', e=>{ e.preventDefault(); pool.classList.add('dragover'); });
   pool.addEventListener('dragleave', ()=> pool.classList.remove('dragover'));
@@ -246,6 +212,7 @@ function attachDnDZones(){
     if(card){ pool.append(card); placements[id] = 'pool'; updatePoolCount(); refreshDownloadState(); updateColBadges(); }
   });
 
+  // Columns
   document.querySelectorAll('.col').forEach((col, colIndex)=>{
     col.addEventListener('dragover', e=>{
       if(canDrop(colIndex)){ e.preventDefault(); col.classList.add('dragover'); }
@@ -265,7 +232,8 @@ function updateColBadges(){
   document.querySelectorAll('.col').forEach((col, idx)=>{
     const have = Array.from(col.querySelectorAll('.card')).length;
     const need = distribution[idx];
-    col.querySelector('.badge').textContent = `${have}/${need}`;
+    const badge = col.querySelector('.badge');
+    if (badge) badge.textContent = `${have}/${need}`;
   });
 }
 
@@ -294,16 +262,30 @@ function downloadCSV(){
   // initial placements: all in pool
   statements.forEach(s => placements[s.id] = 'pool');
 
-  // build columns
-  const colsWrap = document.getElementById('cols');
-  scaleLabels.forEach((label, i)=>{
+  // Build columns into two containers
+  const colsNeg = document.getElementById('colsNeg'); // -4..0 (5 columns)
+  const colsPos = document.getElementById('colsPos'); // +1..+4 (4 columns)
+
+  // negative/neutral indices 0..4
+  for (let i = 0; i <= 4; i++) {
+    const label = scaleLabels[i];
     const head = el('div', {class:'col-head'},
       el('div', {}, el('strong', {html: (label>0?'+':'') + label})),
       el('span', {class:'badge'}, `0/${distribution[i]}`)
     );
     const col = el('div', {class:'col', 'data-col': i}, head);
-    colsWrap.append(col);
-  });
+    colsNeg.append(col);
+  }
+  // positive indices 5..8
+  for (let i = 5; i <= 8; i++) {
+    const label = scaleLabels[i];
+    const head = el('div', {class:'col-head'},
+      el('div', {}, el('strong', {html: (label>0?'+':'') + label})),
+      el('span', {class:'badge'}, `0/${distribution[i]}`)
+    );
+    const col = el('div', {class:'col', 'data-col': i}, head);
+    colsPos.append(col);
+  }
 
   // fill pool with cards
   const pool = document.getElementById('pool');
