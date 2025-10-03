@@ -4,54 +4,41 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Anatomy Stressors Q-Sort</title>
+
 <style>
   :root { --gap: 10px; --card-pad: 10px; --col-w: 180px; }
   body { font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; }
   h1 { margin: 0 0 6px 0; font-size: 22px; }
   .sub { color:#555; margin: 0 0 14px 0; }
-  ..wrap {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;   /* adds some space between left and right */
-}
 
-/* Make the left column scrollable while keeping the grid visible */
-.left {
-  flex: 0 0 45%;
-  max-width: 45%;
-  max-height: 75vh;        /* adjust if you want taller/shorter */
-  overflow: auto;          /* adds a scrollbar when needed */
-  padding-right: 8px;      /* space for scrollbar */
-}
-
-/* Keep the grid aligned at the top */
-.right {
-  flex: 0 0 50%;           
-  max-width: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start; /* keeps grid at top */
-}
-
-/* Mobile-friendly: stack columns on narrow screens */
-@media (max-width: 900px) {
+  /* side-by-side layout */
   .wrap {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  flex-wrap: nowrap;   /* keep side-by-side, no wrapping */
-}
-
-/* Stack only on small phones */
-@media (max-width: 600px) {
-  .wrap { flex-direction: column; }
-  .left, .right { max-width: 100%; flex: 0 0 auto; }
-}
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 20px;
   }
+  .left {
+    flex: 0 0 45%;
+    max-width: 45%;
+    max-height: 75vh;
+    overflow: auto;
+    padding-right: 8px;
+  }
+  .right {
+    flex: 1 1 55%;
+    max-width: 55%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* stack on narrow screens */
+  @media (max-width: 900px) {
+    .wrap { flex-direction: column; }
+    .left, .right { max-width: 100%; flex: 0 0 auto; }
+  }
+
   .pool, .grid { border:1px solid #ddd; border-radius:8px; padding:12px; background:#fafafa; }
   .pool { min-height: 120px; }
   .cards { display:flex; flex-wrap:wrap; gap:var(--gap); }
@@ -61,53 +48,21 @@
     box-shadow: 0 1px 2px rgba(0,0,0,.05);
   }
   .card:active { cursor:grabbing; }
-  .grid { 
-  overflow-x: hidden;   /* prevent horizontal scrolling */
-  overflow-y: auto;     /* allow vertical scroll if needed */
-}
 
-.cols { 
-  display: flex; 
-  gap: var(--gap); 
-}
-
-.col {
-  width: var(--col-w);
-  min-height: 240px;
-  background: #fff;
-  border: 1px dashed #bbb;
-  border-radius: 8px;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Mobile-friendly: shrink columns instead of forcing horizontal scroll */
-@media (max-width: 900px) {
-  .cols {
-    flex-wrap: wrap;           /* allow wrapping on small screens */
-  }
+  .grid { overflow-x: hidden; overflow-y: auto; }
+  .cols { display:flex; gap:var(--gap); }
   .col {
-    flex: 1 1 100px;           /* shrink to fit, but don’t collapse */
-    min-width: 120px;          /* minimum safe width for readability */
-    max-width: 1fr;            /* allow them to share space evenly */
+    width: var(--col-w);
+    min-height: 240px;
+    background:#fff; border:1px dashed #bbb; border-radius:8px; padding:8px;
+    display:flex; flex-direction:column; gap:8px;
   }
-  /* Extra small screens: one column per row */
-@media (max-width: 600px) {
-  .col {
-    flex: 1 1 100%;       /* take full row width */
-    max-width: 100%;      /* ensure no side-by-side columns */
-    min-width: unset;     /* allow full stretch */
-    max-height: 70vh;     /* keep within 70% of viewport height */
-    overflow-y: auto;     /* add scroll if content exceeds height */
-  }
-}
   .col.dragover { background:#f0f7ff; border-color:#5a9bff; }
   .col-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; }
   .badge { font-size:12px; padding:2px 6px; border-radius:999px; background:#eef4ff; border:1px solid #cfe0ff; }
   .tiny { font-size:12px; color:#666; }
   .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
+
   button {
     border:1px solid #1f7aed; background:#2a84ff; color:#fff; padding:10px 14px; border-radius:8px;
     font-weight:600; cursor:pointer;
@@ -116,11 +71,13 @@
   .note { background:#fff9e6; border:1px solid #ffe7a3; padding:10px; border-radius:8px; }
 </style>
 </head>
+
 <body>
   <h1>Anatomy Stressors Q-Sort</h1>
   <p class="sub">Sort the 43 statements from <b>–4 = least characteristic of my stress</b> to <b>+4 = most characteristic</b>. Each column shows its required count—fill exactly.</p>
 
   <div class="wrap">
+    <!-- LEFT: Unsorted pool + actions -->
     <div class="left">
       <div class="pool">
         <div class="row">
@@ -130,32 +87,32 @@
         <div id="pool" class="cards" aria-label="unsorted pool"></div>
         <p class="tiny">Drag a card into any column. You can drag between columns or back to the pool.</p>
       </div>
+
       <div style="height:12px"></div>
       <div class="note tiny">
         <b>Tip:</b> If a column is full, drop is blocked. Empty space means you still need to place cards there.
       </div>
+
       <div style="height:12px"></div>
       <div class="row">
         <button id="downloadBtn" disabled>Download CSV</button>
         <span class="tiny" id="status">Place all cards to enable download.</span>
-        <div class="row" style="margin-top:20px;">
-  <label for="pidInput"><b>Enter Participant ID:</b></label>
-  <input id="pidInput" type="text" placeholder="e.g., P1234" style="padding:6px; margin:6px; border:1px solid #ccc; border-radius:4px;">
-  <button id="submitQualtricsBtn" disabled>Submit to Qualtrics</button>
-<button id="submitQualtricsBtn" disabled>Submit to Qualtrics</button>
-
-<p style="margin-top:20px; font-weight:bold; color:#d9534f;">
-⚠️ Important: After sorting all 43 statements, you must click 
-<b>“Submit to Qualtrics”</b> to record your results in the survey.  
-Downloading the CSV file is optional and for your own record only.
-</p>
-          
-</div>
-<p class="tiny">Submitting will send your Q-sort results directly back into the Qualtrics survey.</p>
-
       </div>
+
+      <div class="row" style="margin-top:8px;">
+        <label for="pidInput"><b>Enter Participant ID:</b></label>
+        <input id="pidInput" type="text" placeholder="e.g., P1234" style="padding:6px; margin:6px; border:1px solid #ccc; border-radius:4px;">
+        <button id="submitQualtricsBtn" disabled>Submit to Qualtrics</button>
+      </div>
+
+      <p style="margin-top:10px; font-weight:bold; color:#d9534f;">
+        ⚠️ After sorting all 43 statements, click <b>“Submit to Qualtrics”</b> to record your results in the survey.<br>
+        Downloading the CSV is optional.
+      </p>
+      <p class="tiny">Submitting will send your Q-sort results directly back into the Qualtrics survey.</p>
     </div>
 
+    <!-- RIGHT: Q-grid -->
     <div class="right">
       <div class="grid">
         <div class="row"><strong>Q Grid (–4 → +4)</strong></div>
@@ -168,7 +125,7 @@ Downloading the CSV file is optional and for your own record only.
 /* ----- Configuration ----- */
 const scaleLabels = [-4,-3,-2,-1,0,1,2,3,4];
 const distribution = [3,4,5,6,7,6,5,4,3]; // must sum to 43
-const csvPath = 'statements.csv';         // already in your repo
+const csvPath = 'statements.csv';         // keep in same directory
 
 /* ----- State ----- */
 let statements = [];     // [{id,text}]
@@ -194,7 +151,6 @@ async function loadCSV(path){
   const out = [];
   for(let i=1;i<rows.length;i++){
     const line = rows[i];
-    // simple split on first comma: id,text (your texts have no commas)
     const idx = line.indexOf(',');
     const id = line.slice(0, idx).trim();
     const text = line.slice(idx+1).trim();
@@ -242,7 +198,6 @@ function makeCard(s){
 }
 
 function attachDnDZones(){
-  // pool
   const pool = document.getElementById('pool');
   pool.addEventListener('dragover', e=>{ e.preventDefault(); pool.classList.add('dragover'); });
   pool.addEventListener('dragleave', ()=> pool.classList.remove('dragover'));
@@ -250,10 +205,9 @@ function attachDnDZones(){
     e.preventDefault(); pool.classList.remove('dragover');
     const id = e.dataTransfer.getData('text/plain');
     const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
-    if(card){ pool.append(card); placements[id] = 'pool'; updatePoolCount(); refreshDownloadState(); }
+    if(card){ pool.append(card); placements[id] = 'pool'; updatePoolCount(); refreshDownloadState(); updateColBadges(); }
   });
 
-  // columns
   document.querySelectorAll('.col').forEach((col, colIndex)=>{
     col.addEventListener('dragover', e=>{
       if(canDrop(colIndex)){ e.preventDefault(); col.classList.add('dragover'); }
@@ -262,7 +216,7 @@ function attachDnDZones(){
     col.addEventListener('drop', e=>{
       e.preventDefault(); col.classList.remove('dragover');
       const id = e.dataTransfer.getData('text/plain');
-      if(!canDrop(colIndex)) return; // block if full
+      if(!canDrop(colIndex)) return;
       const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
       if(card){ col.append(card); placements[id] = colIndex; updatePoolCount(); refreshDownloadState(); updateColBadges(); }
     });
@@ -278,9 +232,8 @@ function updateColBadges(){
 }
 
 function downloadCSV(){
-  // columns −4..+4; pool becomes blank
   const header = 'id,rank\n';
-  let lines = statements.map(s=>{
+  const lines = statements.map(s=>{
     const p = placements[s.id];
     const rank = (typeof p === 'number') ? scaleLabels[p] : '';
     return `${s.id},${rank}`;
@@ -323,44 +276,34 @@ function downloadCSV(){
   updateColBadges();
 
   document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
-  document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
 
-// === Qualtrics Redirect Settings ===
-const QUALTRICS_BASE = "https://shsu.co1.qualtrics.com/jfe/form/SV_9mLZQw7T45q9bcW?return=1";
+  // === Qualtrics Redirect Settings ===
+  const QUALTRICS_BASE = "https://shsu.co1.qualtrics.com/jfe/form/SV_9mLZQw7T45q9bcW?return=1";
 
-// Build query string and redirect
-function submitToQualtrics(){
-  if(!allPlaced()){ 
-    alert("Please place all cards before submitting to Qualtrics."); 
-    return; 
-  }
-  const pid = (document.getElementById('pidInput').value || '').trim();
-  if(!pid){ 
-    alert("Please enter a Participant ID before submitting."); 
-    return; 
-  }
+  function submitToQualtrics(){
+    if(!allPlaced()){
+      alert("Please place all cards before submitting to Qualtrics.");
+      return;
+    }
+    const pid = (document.getElementById('pidInput').value || '').trim();
+    if(!pid){
+      alert("Please enter a Participant ID before submitting.");
+      return;
+    }
 
-  const params = new URLSearchParams();
-  params.set('pid', pid);
-
-  // Loop through all 43 statements and capture ranks
-  for(let i=1; i<=43; i++){
-    const key = String(i);
-    const place = placements[key];
-    const rank = (typeof place === 'number') ? scaleLabels[place] : '';
-    params.set('S'+i, rank);
+    // Build URL safely (preserves ?return=1)
+    const url = new URL(QUALTRICS_BASE);
+    url.searchParams.set('pid', pid);
+    for(let i=1; i<=43; i++){
+      const place = placements[String(i)];
+      const rank = (typeof place === 'number') ? scaleLabels[place] : '';
+      url.searchParams.set('S'+i, rank);
+    }
+    window.location.href = url.toString();
   }
 
-  // Redirect into Qualtrics survey
-  const url = QUALTRICS_BASE + "?" + params.toString();
-  window.location.href = url;
-}
-
-// Hook up Qualtrics button
-document.getElementById('submitQualtricsBtn').addEventListener('click', submitToQualtrics);
-
+  document.getElementById('submitQualtricsBtn').addEventListener('click', submitToQualtrics);
 })();
 </script>
 </body>
 </html>
-
