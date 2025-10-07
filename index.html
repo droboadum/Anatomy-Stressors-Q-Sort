@@ -87,6 +87,35 @@
   }
   button:disabled { opacity:.5; cursor:not-allowed; }
   .note { background:#fff9e6; border:1px solid #ffe7a3; padding:10px; border-radius:8px; }
+/* ===== Visual polish: Positive vs Negative rows, mobile height fix ===== */
+
+/* Light tint for better visual orientation */
+.rows > .row-cols:first-of-type {
+  background: #f4faff;       /* light blue tint for positive side */
+  border-radius: 8px;
+  padding: 8px;
+}
+.rows > .row-cols:last-of-type {
+  background: #fff7f7;       /* soft red tint for negative side */
+  border-radius: 8px;
+  padding: 8px;
+}
+
+/* Row labels a bit bolder and centered */
+.row-label {
+  text-align: center;
+  font-weight: 600;
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
+
+/* Keep columns visible on small screens */
+@media (max-width: 600px) {
+  .col {
+    max-height: 45vh;
+    overflow-y: auto;
+  }
+}
 </style>
 </head>
 
