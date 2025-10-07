@@ -56,7 +56,17 @@
     min-height: 240px;
     background:#fff; border:1px dashed #bbb; border-radius:8px; padding:8px;
     display:flex; flex-direction:column; gap:8px;
+    max-height: 65vh;           /* keep columns visible */
+    overflow-y: auto;           /* scroll inside if needed */
+    scroll-behavior: smooth;
   }
+  @media (max-width: 900px) {
+    .col { max-height: 55vh; }
+  }
+  @media (max-width: 600px) {
+    .col { width: 100%; min-height: 180px; max-height: 45vh; }
+  }
+
   .col.dragover { background:#f0f7ff; border-color:#5a9bff; }
   .col-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; }
   .badge { font-size:12px; padding:2px 6px; border-radius:999px; background:#eef4ff; border:1px solid #cfe0ff; }
@@ -68,7 +78,7 @@
     .col { width: 150px; }
   }
   @media (max-width: 600px) {
-    .col { width: 100%; min-height: 180px; }
+    .col { width: 100%; }
   }
 
   button {
@@ -124,15 +134,13 @@
     <div class="right">
       <div class="grid">
         <div class="grid-sticky">
-          <b>How to rank:</b> −4 = <i>least characteristic of my stress</i> &nbsp;→&nbsp;
-          +4 = <i>most characteristic</i>. Place exactly the required number in each column.
+          <b>How to rank:</b> The <b>upper row</b> holds <b>+1 to +4</b> (most characteristic).<br>
+          The <b>lower row</b> holds <b>0 to −4</b> (least characteristic).<br>
+          <span class="tiny">Tip: For best visibility, start with the <b>upper row</b> and then move downward.</span>
         </div>
 
         <div id="gridRows" class="rows">
-          <!-- JS will inject:
-               Row 1 label + columns for −4…0
-               Row 2 label + columns for +1…+4
-          -->
+          <!-- JS injects rows/columns -->
         </div>
       </div>
     </div>
@@ -273,26 +281,12 @@ function downloadCSV(){
   // initial placements: all in pool
   statements.forEach(s => placements[s.id] = 'pool');
 
-  // build 2-row grid
+  // build 2-row grid (TOP row = positives; BOTTOM row = neutral/negatives)
   const gridRows = document.getElementById('gridRows');
 
-  // Row 1: −4 … 0
-  const row1Label = el('div', {class:'row-label'}, 'Negative to Neutral (−4 → 0)');
-  const row1Cols  = el('div', {class:'row-cols'});
-  for (let i = 0; i <= 4; i++) {
-    const label = scaleLabels[i];
-    const head = el('div', {class:'col-head'},
-      el('div', {}, el('strong', {html: (label>0?'+':'') + label})),
-      el('span', {class:'badge'}, `0/${distribution[i]}`)
-    );
-    const col = el('div', {class:'col', 'data-col': i}, head);
-    row1Cols.append(col);
-  }
-  gridRows.append(row1Label, row1Cols);
-
-  // Row 2: +1 … +4
-  const row2Label = el('div', {class:'row-label'}, 'Positive (+1 → +4)');
-  const row2Cols  = el('div', {class:'row-cols'});
+  // Row 1 (TOP): +1 … +4  -> indices 5..8
+  const rowTopLabel = el('div', {class:'row-label'}, 'Positive (Most Characteristic: +1 → +4)');
+  const rowTopCols  = el('div', {class:'row-cols'});
   for (let i = 5; i <= 8; i++) {
     const label = scaleLabels[i];
     const head = el('div', {class:'col-head'},
@@ -300,9 +294,23 @@ function downloadCSV(){
       el('span', {class:'badge'}, `0/${distribution[i]}`)
     );
     const col = el('div', {class:'col', 'data-col': i}, head);
-    row2Cols.append(col);
+    rowTopCols.append(col);
   }
-  gridRows.append(row2Label, row2Cols);
+  gridRows.append(rowTopLabel, rowTopCols);
+
+  // Row 2 (BOTTOM): 0 … −4  -> indices 0..4
+  const rowBottomLabel = el('div', {class:'row-label'}, 'Neutral to Negative (0 → −4)');
+  const rowBottomCols  = el('div', {class:'row-cols'});
+  for (let i = 0; i <= 4; i++) {
+    const label = scaleLabels[i];
+    const head = el('div', {class:'col-head'},
+      el('div', {}, el('strong', {html: (label>0?'+':'') + label})),
+      el('span', {class:'badge'}, `0/${distribution[i]}`)
+    );
+    const col = el('div', {class:'col', 'data-col': i}, head);
+    rowBottomCols.append(col);
+  }
+  gridRows.append(rowBottomLabel, rowBottomCols);
 
   // fill pool with cards
   const pool = document.getElementById('pool');
@@ -311,6 +319,14 @@ function downloadCSV(){
 
   attachDnDZones();
   updateColBadges();
+
+  // Autofill PID from URL (?pid=XXXX) when coming from Qualtrics
+  const urlParams = new URLSearchParams(window.location.search);
+  const pidFromUrl = urlParams.get('pid');
+  if (pidFromUrl) {
+    const pidInput = document.getElementById('pidInput');
+    if (pidInput) pidInput.value = pidFromUrl;
+  }
 
   document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
 
