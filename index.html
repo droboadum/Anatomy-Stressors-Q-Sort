@@ -47,8 +47,8 @@ font-weight:600;cursor:pointer}
 button:disabled{opacity:.5;cursor:not-allowed}
 .note{background:#fff9e6;border:1px solid #ffe7a3;padding:10px;border-radius:8px}
 
-.rows>.row-cols:first-of-type{background:#f4faff;border-radius:8px;padding:8px}
-.rows>.row-cols:last-of-type{background:#fff7f7;border-radius:8px;padding:8px}
+.rows>.row-cols:first-of-type{background:#f4faff;border-radius:8px;padding:8px}   /* positives */
+.rows>.row-cols:last-of-type{background:#fff7f7;border-radius:8px;padding:8px}    /* 0 & negatives */
 @media(max-width:600px){.col{width:100%;max-height:45vh}}
 </style>
 </head>
@@ -69,7 +69,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <span id="poolCount" class="badge">loading…</span>
       </div>
       <div id="pool" class="cards"></div>
-      <p class="tiny">Drag a card into any column. You can move cards freely between boxes.</p>
+      <p class="tiny">Drag a card into any column. You can move cards between boxes or back to the pool.</p>
     </div>
 
     <div style="height:12px"></div>
@@ -82,8 +82,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </div>
 
     <div class="row" style="margin-top:8px;">
-      <button id="jumpNeg">Go to −1 → −4</button>
-      <button id="jumpPos">Go to 0 → +4</button>
+      <button id="jumpNeg">Go to 0 → −4</button>
+      <button id="jumpPos">Go to +1 → +4</button>
     </div>
 
     <div class="row" style="margin-top:8px;">
@@ -103,10 +103,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <div class="right">
     <div class="grid">
       <div class="grid-sticky">
-        <b>How to rank:</b> The <b>upper row</b> holds <b>0 to +4</b> (neutral to most characteristic).<br>
-        The <b>lower row</b> holds <b>−1 to −4</b> (least characteristic).<br>
+        <b>How to rank:</b> The <b>upper row</b> holds <b>+1 to +4</b> (most characteristic).<br>
+        The <b>lower row</b> holds <b>0 to −4</b> (neutral to least characteristic).<br>
         <span class="tiny">
-          Tip: For easier visibility, start with the <b>lower row (−1 → −4)</b> first, then complete the upper row.
+          Tip: For easier visibility, start with the <b>lower row (0 → −4)</b> first, then complete the upper row.
         </span>
       </div>
 
@@ -116,17 +116,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </div>
 
 <script>
-const scaleLabels = [-4,-3,-2,-1,0,1,2,3,4];
-const distribution = [3,4,5,6,7,6,5,4,3];
+/* ----- Config ----- */
+const scaleLabels = [-4,-3,-2,-1,0,1,2,3,4];      // indices 0..8
+const distribution = [3,4,5,6,7, 6,5,4,3];        // -4..+4 must sum to 43
 const csvPath = 'statements.csv';
-let statements = [];
-let placements = {};
 
-function el(tag,attrs={},...children){
-  const x=document.createElement(tag);
+/* ----- State ----- */
+let statements = [];         // [{id,text}]
+let placements = {};         // statementId -> columnIndex or 'pool'
+
+/* ----- Helpers ----- */
+function el(tag, attrs={}, ...children){
+  const x = document.createElement(tag);
   Object.entries(attrs).forEach(([k,v])=>{
-    if(k==='class')x.className=v;
-    else if(k==='html')x.innerHTML=v;
+    if(k==='class') x.className=v;
+    else if(k==='html') x.innerHTML=v;
     else x.setAttribute(k,v);
   });
   children.forEach(c=>x.append(c));
@@ -134,156 +138,194 @@ function el(tag,attrs={},...children){
 }
 
 async function loadCSV(path){
-  const res=await fetch(path);
-  if(!res.ok)throw new Error('Could not load statements.csv');
-  const txt=await res.text();
-  const rows=txt.trim().split(/\r?\n/);
-  const out=[];
+  const res = await fetch(path);
+  if(!res.ok) throw new Error('Could not load statements.csv');
+  const txt = await res.text();
+  const rows = txt.trim().split(/\r?\n/);
+  const out = [];
   for(let i=1;i<rows.length;i++){
-    const line=rows[i];
-    const idx=line.indexOf(',');
-    const id=line.slice(0,idx).trim();
-    const text=line.slice(idx+1).trim();
-    if(id&&text)out.push({id,text});
+    const line = rows[i];
+    const idx = line.indexOf(',');
+    const id = line.slice(0, idx).trim();
+    const text = line.slice(idx+1).trim();
+    if(id && text) out.push({ id, text });
   }
   return out;
 }
 
 function updatePoolCount(){
-  const c=Object.values(placements).filter(v=>v==='pool').length;
-  document.getElementById('poolCount').textContent=c+' remaining';
+  const poolCount = Object.values(placements).filter(v => v==='pool').length;
+  document.getElementById('poolCount').textContent = poolCount + ' remaining';
 }
-function canDrop(i){return Object.values(placements).filter(v=>v===i).length<distribution[i];}
-function allPlaced(){return Object.values(placements).every(v=>v!=='pool');}
-
-function refreshState(){
-  const ready=allPlaced();
-  document.getElementById('downloadBtn').disabled=!ready;
-  document.getElementById('submitQualtricsBtn').disabled=!ready;
-  document.getElementById('status').textContent=ready?
-    'All set. You can download CSV or submit to Qualtrics.':
-    'Place all cards to enable download/submit.';
+function canDrop(colIndex){
+  const current = Object.values(placements).filter(v => v===colIndex).length;
+  return current < distribution[colIndex];
+}
+function allPlaced(){
+  return Object.values(placements).every(v => v!=='pool');
+}
+function refreshButtons(){
+  const ready = allPlaced();
+  document.getElementById('downloadBtn').disabled = !ready;
+  document.getElementById('submitQualtricsBtn').disabled = !ready;
+  document.getElementById('status').textContent = ready
+    ? 'All set. You can download CSV or submit to Qualtrics.'
+    : 'Place all cards to enable download/submit.';
 }
 
 function makeCard(s){
-  const c=el('div',{class:'card',draggable:'true','data-id':s.id});
-  c.textContent=s.text;
-  c.addEventListener('dragstart',e=>{
-    e.dataTransfer.setData('text/plain',s.id);
+  const c = el('div', {class:'card', draggable:'true', 'data-id':s.id});
+  c.textContent = s.text;
+  c.addEventListener('dragstart', e=>{
+    e.dataTransfer.setData('text/plain', s.id);
   });
   return c;
 }
 
-function attachDnD(){
-  const pool=document.getElementById('pool');
-  pool.addEventListener('dragover',e=>{e.preventDefault();pool.classList.add('dragover')});
-  pool.addEventListener('dragleave',()=>pool.classList.remove('dragover'));
-  pool.addEventListener('drop',e=>{
-    e.preventDefault();pool.classList.remove('dragover');
-    const id=e.dataTransfer.getData('text/plain');
-    const card=document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
-    if(card){pool.append(card);placements[id]='pool';updatePoolCount();refreshState();updateBadges();}
+function attachDnDZones(){
+  // Pool
+  const pool = document.getElementById('pool');
+  pool.addEventListener('dragover', e=>{ e.preventDefault(); pool.classList.add('dragover'); });
+  pool.addEventListener('dragleave', ()=> pool.classList.remove('dragover'));
+  pool.addEventListener('drop', e=>{
+    e.preventDefault(); pool.classList.remove('dragover');
+    const id = e.dataTransfer.getData('text/plain');
+    const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
+    if(card){ pool.append(card); placements[id] = 'pool'; updatePoolCount(); refreshButtons(); updateColBadges(); }
   });
 
-  document.querySelectorAll('.col').forEach((col,i)=>{
-    col.addEventListener('dragover',e=>{
-      if(canDrop(i)){e.preventDefault();col.classList.add('dragover');}
+  // Columns
+  document.querySelectorAll('.col').forEach((col, colIndex)=>{
+    col.addEventListener('dragover', e=>{
+      if(canDrop(colIndex)){ e.preventDefault(); col.classList.add('dragover'); }
     });
-    col.addEventListener('dragleave',()=>col.classList.remove('dragover'));
-    col.addEventListener('drop',e=>{
-      e.preventDefault();col.classList.remove('dragover');
-      const id=e.dataTransfer.getData('text/plain');
-      if(!canDrop(i))return;
-      const card=document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
-      if(card){col.append(card);placements[id]=i;updatePoolCount();refreshState();updateBadges();}
+    col.addEventListener('dragleave', ()=> col.classList.remove('dragover'));
+    col.addEventListener('drop', e=>{
+      e.preventDefault(); col.classList.remove('dragover');
+      const id = e.dataTransfer.getData('text/plain');
+      if(!canDrop(colIndex)) return;
+      const card = document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
+      if(card){ col.append(card); placements[id] = colIndex; updatePoolCount(); refreshButtons(); updateColBadges(); }
     });
   });
 }
 
-function updateBadges(){
-  document.querySelectorAll('.col').forEach((col,i)=>{
-    const have=col.querySelectorAll('.card').length;
-    const need=distribution[i];
-    const b=col.querySelector('.badge');
-    if(b)b.textContent=`${have}/${need}`;
+function updateColBadges(){
+  document.querySelectorAll('.col').forEach((col, idx)=>{
+    const have = col.querySelectorAll('.card').length;
+    const need = distribution[idx];
+    const badge = col.querySelector('.badge');
+    if (badge) badge.textContent = `${have}/${need}`;
   });
 }
 
 function downloadCSV(){
-  const header='id,rank\n';
-  const lines=statements.map(s=>{
-    const p=placements[s.id];
-    const r=(typeof p==='number')?scaleLabels[p]:'';
-    return `${s.id},${r}`;
+  const header = 'id,rank\n';
+  const lines = statements.map(s=>{
+    const p = placements[s.id];
+    const rank = (typeof p === 'number') ? scaleLabels[p] : '';
+    return `${s.id},${rank}`;
   }).join('\n');
-  const blob=new Blob([header+lines],{type:'text/csv'});
-  const url=URL.createObjectURL(blob);
-  const a=el('a',{href:url,download:'qsort_results.csv'});
-  document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);
+  const blob = new Blob([header + lines], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = el('a', {href:url, download:'qsort_results.csv'});
+  document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
+/* ----- Init ----- */
 (async function(){
-  statements=await loadCSV(csvPath);
-  statements.forEach(s=>placements[s.id]='pool');
-
-  const grid=document.getElementById('gridRows');
-
-  // upper row 0 → +4
-  const topLbl=el('div',{class:'row-label'},'Upper Row: Neutral to Positive (0 → +4)');
-  const topRow=el('div',{class:'row-cols',id:'rowPos'});
-  for(let i=4;i<=8;i++){
-    const label=scaleLabels[i];
-    const head=el('div',{class:'col-head'},
-      el('div',{},el('strong',{html:(label>0?'+':'')+label})),
-      el('span',{class:'badge'},`0/${distribution[i]}`));
-    const col=el('div',{class:'col','data-col':i},head);
-    topRow.append(col);
+  try{
+    statements = await loadCSV(csvPath);
+  }catch(err){
+    alert('Error loading statements.csv. Make sure it exists in the repo root.\n' + err.message);
+    return;
   }
-  grid.append(topLbl,topRow);
 
-  // lower row −1 → −4
-  const botLbl=el('div',{class:'row-label'},'Lower Row: Least Characteristic (−1 → −4)');
-  const botRow=el('div',{class:'row-cols',id:'rowNeg'});
-  for(let i=0;i<=3;i++){
-    const label=scaleLabels[i];
-    const head=el('div',{class:'col-head'},
-      el('div',{},el('strong',{html:(label>0?'+':'')+label})),
-      el('span',{class:'badge'},`0/${distribution[i]}`));
-    const col=el('div',{class:'col','data-col':i},head);
-    botRow.append(col);
+  // initial placements: all in pool
+  statements.forEach(s => placements[s.id] = 'pool');
+
+  const gridRows = document.getElementById('gridRows');
+
+  /* UPPER ROW: +1 … +4  -> indices 5..8 */
+  const rowTopLabel = el('div', {class:'row-label'}, 'Upper Row: Most Characteristic (+1 → +4)');
+  const rowTopCols  = el('div', {class:'row-cols', id:'rowPos'});
+  for (let i = 5; i <= 8; i++) {
+    const label = scaleLabels[i];
+    const head = el('div', {class:'col-head'},
+      el('div', {}, el('strong', {html: (label>0?'+':'') + label})),
+      el('span', {class:'badge'}, `0/${distribution[i]}`)
+    );
+    const col = el('div', {class:'col', 'data-col': i}, head);
+    rowTopCols.append(col);
   }
-  grid.append(botLbl,botRow);
+  gridRows.append(rowTopLabel, rowTopCols);
 
-  const pool=document.getElementById('pool');
-  statements.forEach(s=>pool.append(makeCard(s)));
-  updatePoolCount();attachDnD();updateBadges();
-
-  document.getElementById('jumpPos').addEventListener('click',()=>{
-    document.getElementById('rowPos').scrollIntoView({behavior:'smooth'});
+  /* LOWER ROW: 0 … −4  -> indices 4,3,2,1,0 (so 0 appears first) */
+  const rowBottomLabel = el('div', {class:'row-label'}, 'Lower Row: Neutral to Least (0 → −4)');
+  const rowBottomCols  = el('div', {class:'row-cols', id:'rowNeg'});
+  const lowerOrder = [4,3,2,1,0];  // show 0 box first, then −1, −2, −3, −4
+  lowerOrder.forEach(i=>{
+    const label = scaleLabels[i];
+    const head = el('div', {class:'col-head'},
+      el('div', {}, el('strong', {html: (label>0?'+':'') + label})),
+      el('span', {class:'badge'}, `0/${distribution[i]}`)
+    );
+    const col = el('div', {class:'col', 'data-col': i}, head);
+    rowBottomCols.append(col);
   });
-  document.getElementById('jumpNeg').addEventListener('click',()=>{
-    document.getElementById('rowNeg').scrollIntoView({behavior:'smooth'});
+  gridRows.append(rowBottomLabel, rowBottomCols);
+
+  // fill pool with cards
+  const pool = document.getElementById('pool');
+  statements.forEach(s => pool.append( makeCard(s) ));
+  updatePoolCount();
+
+  attachDnDZones();
+  updateColBadges();
+
+  // Quick jump buttons
+  document.getElementById('jumpPos').addEventListener('click', () => {
+    document.getElementById('rowPos').scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+  document.getElementById('jumpNeg').addEventListener('click', () => {
+    document.getElementById('rowNeg').scrollIntoView({ behavior:'smooth', block:'start' });
   });
 
-  const pidFrom=new URLSearchParams(window.location.search).get('pid');
-  if(pidFrom)document.getElementById('pidInput').value=pidFrom;
+  // Autofill PID from URL (?pid=XXXX) when coming from Qualtrics
+  const urlParams = new URLSearchParams(window.location.search);
+  const pidFromUrl = urlParams.get('pid');
+  if (pidFromUrl) {
+    const pidInput = document.getElementById('pidInput');
+    if (pidInput) pidInput.value = pidFromUrl;
+  }
 
-  document.getElementById('downloadBtn').addEventListener('click',downloadCSV);
+  document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
 
-  const QUALTRICS_BASE="https://shsu.co1.qualtrics.com/jfe/form/SV_9mLZQw7T45q9bcW?return=1";
-  document.getElementById('submitQualtricsBtn').addEventListener('click',()=>{
-    if(!allPlaced()){alert("Please place all cards first.");return;}
-    const pid=(document.getElementById('pidInput').value||'').trim();
-    if(!pid){alert("Enter Participant ID first.");return;}
-    const url=new URL(QUALTRICS_BASE);
-    url.searchParams.set('pid',pid);
-    for(let i=1;i<=43;i++){
-      const p=placements[String(i)];
-      const r=(typeof p==='number')?scaleLabels[p]:'';
-      url.searchParams.set('S'+i,r);
+  // === Return to Qualtrics ===
+  const QUALTRICS_BASE = "https://shsu.co1.qualtrics.com/jfe/form/SV_9mLZQw7T45q9bcW?return=1";
+
+  function submitToQualtrics(){
+    if(!allPlaced()){
+      alert("Please place all cards before submitting to Qualtrics.");
+      return;
     }
-    window.location.href=url.toString();
-  });
+    const pid = (document.getElementById('pidInput').value || '').trim();
+    if(!pid){
+      alert("Please enter a Participant ID before submitting.");
+      return;
+    }
+
+    const url = new URL(QUALTRICS_BASE);
+    url.searchParams.set('pid', pid);
+    for(let i=1; i<=43; i++){
+      const place = placements[String(i)];
+      const rank = (typeof place === 'number') ? scaleLabels[place] : '';
+      url.searchParams.set('S'+i, rank);
+    }
+    window.location.href = url.toString();
+  }
+
+  document.getElementById('submitQualtricsBtn').addEventListener('click', submitToQualtrics);
 })();
 </script>
 </body>
