@@ -47,7 +47,7 @@
   .grid-sticky b { font-weight: 700; }
 
   .rows { display:flex; flex-direction:column; gap:20px; }
-  .row-label { font-weight:bold; font-size:14px; color:#444; margin:6px 0; text-align:center; }
+  .row-label { font-weight:600; font-size:14px; color:#444; margin:6px 0; text-align:center; }
 
   .row-cols { display:flex; gap:var(--gap); justify-content:center; flex-wrap:wrap; }
 
@@ -56,16 +56,12 @@
     min-height: 240px;
     background:#fff; border:1px dashed #bbb; border-radius:8px; padding:8px;
     display:flex; flex-direction:column; gap:8px;
-    max-height: 65vh;           /* keep columns visible */
-    overflow-y: auto;           /* scroll inside if needed */
+    max-height: 65vh;
+    overflow-y: auto;
     scroll-behavior: smooth;
   }
-  @media (max-width: 900px) {
-    .col { max-height: 55vh; }
-  }
-  @media (max-width: 600px) {
-    .col { width: 100%; min-height: 180px; max-height: 45vh; }
-  }
+  @media (max-width: 900px) { .col { max-height: 55vh; } }
+  @media (max-width: 600px) { .col { width: 100%; min-height: 180px; max-height: 45vh; } }
 
   .col.dragover { background:#f0f7ff; border-color:#5a9bff; }
   .col-head { display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; }
@@ -74,12 +70,8 @@
   .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0; }
 
   /* responsive: columns scale down nicely */
-  @media (max-width: 1024px) {
-    .col { width: 150px; }
-  }
-  @media (max-width: 600px) {
-    .col { width: 100%; }
-  }
+  @media (max-width: 1024px) { .col { width: 150px; } }
+  @media (max-width: 600px) { .col { width: 100%; } }
 
   button {
     border:1px solid #1f7aed; background:#2a84ff; color:#fff; padding:10px 14px; border-radius:8px;
@@ -87,41 +79,28 @@
   }
   button:disabled { opacity:.5; cursor:not-allowed; }
   .note { background:#fff9e6; border:1px solid #ffe7a3; padding:10px; border-radius:8px; }
-/* ===== Visual polish: Positive vs Negative rows, mobile height fix ===== */
 
-/* Light tint for better visual orientation */
-.rows > .row-cols:first-of-type {
-  background: #f4faff;       /* light blue tint for positive side */
-  border-radius: 8px;
-  padding: 8px;
-}
-.rows > .row-cols:last-of-type {
-  background: #fff7f7;       /* soft red tint for negative side */
-  border-radius: 8px;
-  padding: 8px;
-}
-
-/* Row labels a bit bolder and centered */
-.row-label {
-  text-align: center;
-  font-weight: 600;
-  margin-top: 8px;
-  margin-bottom: 6px;
-}
-
-/* Keep columns visible on small screens */
-@media (max-width: 600px) {
-  .col {
-    max-height: 45vh;
-    overflow-y: auto;
+  /* Visual polish: Positive vs Negative rows, mobile height fix */
+  .rows > .row-cols:first-of-type {
+    background: #f4faff;       /* light blue tint for upper row (0 → +4) */
+    border-radius: 8px;
+    padding: 8px;
   }
-}
+  .rows > .row-cols:last-of-type {
+    background: #fff7f7;       /* soft red tint for lower row (−1 → −4) */
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  @media (max-width: 600px) {
+    .col { max-height: 45vh; overflow-y: auto; }
+  }
 </style>
 </head>
 
 <body>
   <h1>Anatomy Stressors Q-Sort</h1>
-  <p class="sub">Sort the 43 statements from <b>–4 = least characteristic of my stress</b> to <b>+4 = most characteristic</b>. Each column shows its required count—fill exactly.</p>
+  <p class="sub">Sort the 43 statements from <b>−4 = least characteristic of my stress</b> to <b>+4 = most characteristic</b>. Each column shows its required count—fill exactly.</p>
 
   <div class="wrap">
     <!-- LEFT: Unsorted pool + actions -->
@@ -146,6 +125,12 @@
         <span class="tiny" id="status">Place all cards to enable download.</span>
       </div>
 
+      <!-- Quick jump buttons -->
+      <div class="row" style="margin-top:8px;">
+        <button id="jumpPos">Go to 0 → +4</button>
+        <button id="jumpNeg">Go to −1 → −4</button>
+      </div>
+
       <div class="row" style="margin-top:8px;">
         <label for="pidInput"><b>Enter Participant ID:</b></label>
         <input id="pidInput" type="text" placeholder="e.g., P1234" style="padding:6px; margin:6px; border:1px solid #ccc; border-radius:4px;">
@@ -163,9 +148,9 @@
     <div class="right">
       <div class="grid">
         <div class="grid-sticky">
-          <b>How to rank:</b> The <b>upper row</b> holds <b>+1 to +4</b> (most characteristic).<br>
-          The <b>lower row</b> holds <b>0 to −4</b> (least characteristic).<br>
-          <span class="tiny">Tip: For best visibility, start with the <b>upper row</b> and then move downward.</span>
+          <b>How to rank:</b> The <b>upper row</b> holds <b>0 to +4</b> (neutral to most characteristic).<br>
+          The <b>lower row</b> holds <b>−1 to −4</b> (least characteristic).<br>
+          <span class="tiny">Tip: Start with the <b>upper row (0 → +4)</b>, then complete the lower row.</span>
         </div>
 
         <div id="gridRows" class="rows">
@@ -177,8 +162,8 @@
 
 <script>
 /* ----- Configuration ----- */
-const scaleLabels = [-4,-3,-2,-1,0,1,2,3,4];
-const distribution = [3,4,5,6,7, 6,5,4,3]; // -4..+4 must sum to 43
+const scaleLabels = [-4,-3,-2,-1,0,1,2,3,4];          // indices 0..8
+const distribution = [3,4,5,6,7, 6,5,4,3];            // -4..+4 must sum to 43
 const csvPath = 'statements.csv';
 
 /* ----- State ----- */
@@ -310,13 +295,12 @@ function downloadCSV(){
   // initial placements: all in pool
   statements.forEach(s => placements[s.id] = 'pool');
 
-  // build 2-row grid (TOP row = positives; BOTTOM row = neutral/negatives)
   const gridRows = document.getElementById('gridRows');
 
-  // Row 1 (TOP): +1 … +4  -> indices 5..8
-  const rowTopLabel = el('div', {class:'row-label'}, 'Positive (Most Characteristic: +1 → +4)');
-  const rowTopCols  = el('div', {class:'row-cols'});
-  for (let i = 5; i <= 8; i++) {
+  /* Row 1 (TOP): 0 … +4  -> indices 4..8 */
+  const rowTopLabel = el('div', {class:'row-label'}, 'Upper Row: Neutral to Positive (0 → +4)');
+  const rowTopCols  = el('div', {class:'row-cols', id:'rowPos'});
+  for (let i = 4; i <= 8; i++) {
     const label = scaleLabels[i];
     const head = el('div', {class:'col-head'},
       el('div', {}, el('strong', {html: (label>0?'+':'') + label})),
@@ -327,10 +311,10 @@ function downloadCSV(){
   }
   gridRows.append(rowTopLabel, rowTopCols);
 
-  // Row 2 (BOTTOM): 0 … −4  -> indices 0..4
-  const rowBottomLabel = el('div', {class:'row-label'}, 'Neutral to Negative (0 → −4)');
-  const rowBottomCols  = el('div', {class:'row-cols'});
-  for (let i = 0; i <= 4; i++) {
+  /* Row 2 (BOTTOM): −1 … −4  -> indices 0..3 */
+  const rowBottomLabel = el('div', {class:'row-label'}, 'Lower Row: Least Characteristic (−1 → −4)');
+  const rowBottomCols  = el('div', {class:'row-cols', id:'rowNeg'});
+  for (let i = 0; i <= 3; i++) {
     const label = scaleLabels[i];
     const head = el('div', {class:'col-head'},
       el('div', {}, el('strong', {html: (label>0?'+':'') + label})),
@@ -349,6 +333,14 @@ function downloadCSV(){
   attachDnDZones();
   updateColBadges();
 
+  // Quick jump buttons
+  document.getElementById('jumpPos')?.addEventListener('click', () => {
+    document.getElementById('rowPos')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+  document.getElementById('jumpNeg')?.addEventListener('click', () => {
+    document.getElementById('rowNeg')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+
   // Autofill PID from URL (?pid=XXXX) when coming from Qualtrics
   const urlParams = new URLSearchParams(window.location.search);
   const pidFromUrl = urlParams.get('pid');
@@ -359,7 +351,7 @@ function downloadCSV(){
 
   document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
 
-  // === Qualtrics Redirect Settings ===
+  // === Qualtrics Redirect Settings (return to Qualtrics) ===
   const QUALTRICS_BASE = "https://shsu.co1.qualtrics.com/jfe/form/SV_9mLZQw7T45q9bcW?return=1";
 
   function submitToQualtrics(){
