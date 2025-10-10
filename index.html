@@ -53,7 +53,20 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 <div class="wrap">
   <div class="left">
-    <div class="pool">
+
+    <!-- 🔹 PID first -->
+    <div class="row" style="margin-top:0;">
+      <label for="pidInput"><b>Participant ID:</b></label>
+      <input id="pidInput" type="text" placeholder="e.g., AB123"
+        style="padding:6px;margin:6px;border:1px solid #ccc;border-radius:4px" autofocus>
+    </div>
+    <p class="tiny" style="margin-top:-6px">
+      Please create/enter a unique code with <b>two letters + three numbers</b> (e.g., AB123).
+      You’ll re-enter the same code in Qualtrics.
+    </p>
+
+    <!-- Unsorted statements + controls -->
+    <div class="pool" style="margin-top:10px;">
       <div class="row">
         <strong>Unsorted Statements</strong>
         <span id="poolCount" class="badge">loading…</span>
@@ -76,9 +89,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </div>
 
     <div class="row" style="margin-top:8px">
-      <label for="pidInput"><b>Participant ID:</b></label>
-      <input id="pidInput" type="text" placeholder="e.g., P1234"
-        style="padding:6px;margin:6px;border:1px solid #ccc;border-radius:4px">
       <button id="submitQualtricsBtn" disabled>Submit to Qualtrics</button>
     </div>
 
