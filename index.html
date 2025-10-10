@@ -195,7 +195,24 @@ const u=new URL(BASE);u.searchParams.set('pid',pid);
 for(let i=1;i<=43;i++){const p=placements[String(i)];
 const r=(typeof p==='number')?scaleLabels[p]:'';u.searchParams.set('S'+i,r);}
 location.href=u.toString();};
-})();
+})();<script>
+// --- Auto-fill Participant ID (PID) from Qualtrics URL ---
+const urlParams = new URLSearchParams(window.location.search);
+const pidFromURL = urlParams.get('pid') || '';
+
+if (pidFromURL) {
+  // Find the Participant ID input field in HTMLQ
+  const pidInput = document.querySelector('#participantID');
+  if (pidInput) {
+    pidInput.value = pidFromURL;
+    pidInput.readOnly = true; // optional: prevents editing
+  }
+
+  // Make PID available globally for saving/redirect
+  window.participantID = pidFromURL;
+}
+</script>
+
 </script>
 </body>
 </html>
