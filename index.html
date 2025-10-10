@@ -195,7 +195,8 @@ const u=new URL(BASE);u.searchParams.set('pid',pid);
 for(let i=1;i<=43;i++){const p=placements[String(i)];
 const r=(typeof p==='number')?scaleLabels[p]:'';u.searchParams.set('S'+i,r);}
 location.href=u.toString();};
-})();<script>
+})();
+  <script>
 // --- Auto-fill Participant ID (PID) from Qualtrics URL ---
 const urlParams = new URLSearchParams(window.location.search);
 const pidFromURL = urlParams.get('pid') || '';
