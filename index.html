@@ -6,6 +6,8 @@
 <title>Anatomy Stressors Q-Sort</title>
 <style>
 :root{--gap:10px;--card-pad:10px;--col-w:180px}
+
+/* Base layout */
 body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:20px}
 h1{margin:0 0 6px 0;font-size:22px}
 .sub{color:#555;margin:0 0 14px 0}
@@ -13,34 +15,86 @@ h1{margin:0 0 6px 0;font-size:22px}
 .left{flex:0 0 45%;max-width:45%;max-height:75vh;overflow:auto;padding-right:8px}
 .right{flex:1 1 55%;max-width:55%;display:flex;flex-direction:column;align-items:flex-start}
 @media(max-width:900px){.wrap{flex-direction:column}.left,.right{max-width:100%;flex:0 0 auto}}
+
+/* Pools & grids */
 .pool,.grid{border:1px solid #ddd;border-radius:8px;padding:12px;background:#fafafa}
 .pool{min-height:120px}
-.cards{display:flex;flex-wrap:wrap;gap:var(--gap)}
-.card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:var(--card-pad);
-width:calc(50% - var(--gap)/2);cursor:grab;user-select:none;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+
+/* 🔁 Unsorted statements: exact two columns (CSS-only) */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:var(--gap);
+}
+.card{
+  background:#fff;border:1px solid #ddd;border-radius:8px;padding:var(--card-pad);
+  cursor:grab;user-select:none;box-shadow:0 1px 2px rgba(0,0,0,.05)
+}
 .card:active{cursor:grabbing}
+@media(max-width:600px){
+  .cards{grid-template-columns:1fr;}
+}
+
+/* Sort grid */
 .grid{overflow-x:hidden;overflow-y:auto}
 .grid-sticky{position:sticky;top:0;background:#f5faff;border:1px solid #d6e6ff;
 padding:8px 10px;border-radius:6px;font-size:13px;margin-bottom:10px}
 .grid-sticky b{font-weight:700}
 .rows{display:flex;flex-direction:column;gap:25px}
 .row-label{text-align:center;font-weight:600;font-size:14px;color:#444;margin:4px 0}
-.row-cols{display:flex;gap:var(--gap);justify-content:center;flex-wrap:wrap}
-.col{width:var(--col-w);min-height:240px;background:#fff;border:1px dashed #bbb;
-border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:8px;
-max-height:65vh;overflow-y:auto;scroll-behavior:smooth}
+
+/* 🔒 Keep each row on one line; side-scroll if needed */
+.row-cols{
+  display:flex;
+  gap:var(--gap);
+  justify-content:flex-start;   /* was center */
+  flex-wrap:nowrap;             /* no wrapping; keeps +1→+4 and 0→−4 each on a single line */
+  overflow-x:auto;              /* horizontal scroll on smaller screens */
+  padding-bottom:6px;
+  scroll-snap-type:x mandatory; /* nice snapping */
+}
+
+/* Columns inside rows */
+.col{
+  flex:0 0 var(--col-w);        /* fixed basis so four columns sit in one horizontal strip */
+  min-height:240px;background:#fff;border:1px dashed #bbb;
+  border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:8px;
+  max-height:65vh;overflow-y:auto;scroll-behavior:smooth;
+  scroll-snap-align:start;
+}
 .col.dragover{background:#f0f7ff;border-color:#5a9bff}
+
+/* Slightly shrink columns on narrower screens so they often fit without scrolling */
+@media (max-width:1200px){ :root{ --col-w:160px } }
+@media (max-width:992px){  :root{ --col-w:150px } }
+
+/* On very small screens, allow columns to be full width but still in a single horizontal row via var(--col-w) */
+@media(max-width:600px){
+  :root{ --col-w:320px }  /* adjust as desired; keeps horizontal scroll rather than wrapping */
+  .col{ max-height:45vh }
+}
+
+/* Optional: thinner horizontal scrollbar styling (WebKit) */
+.row-cols::-webkit-scrollbar{height:8px}
+.row-cols::-webkit-scrollbar-thumb{background:#cfd8ff;border-radius:8px}
+
+/* Headers, badges, misc */
 .col-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 6px 0}
 .badge{font-size:12px;padding:2px 6px;border-radius:999px;background:#eef4ff;border:1px solid #cfe0ff}
 .tiny{font-size:12px;color:#666}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+
+/* Buttons */
 button{border:1px solid #1f7aed;background:#2a84ff;color:#fff;padding:10px 14px;border-radius:8px;
 font-weight:600;cursor:pointer}
 button:disabled{opacity:.5;cursor:not-allowed}
+
+/* Notes + emphasis */
 .note{background:#fff9e6;border:1px solid #ffe7a3;padding:10px;border-radius:8px}
+
+/* Keep the slight background tints you had on first/last row groups */
 .rows>.row-cols:first-of-type{background:#f4faff;border-radius:8px;padding:8px}
 .rows>.row-cols:last-of-type{background:#fff7f7;border-radius:8px;padding:8px}
-@media(max-width:600px){.col{width:100%;max-height:45vh}}
 </style>
 </head>
 
