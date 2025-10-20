@@ -101,7 +101,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <body>
 <h1>Anatomy Stressors Q-Sort</h1>
 <p class="sub">
-  Sort the 43 statements from <b>−4 = least characteristic of my stress</b> to 
+  Sort the 44 statements from <b>−4 = least characteristic of my stress</b> to 
   <b>+4 = most characteristic</b>. Each column shows its required count—fill exactly.
 </p>
 
@@ -147,7 +147,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </div>
 
     <p style="margin-top:10px;font-weight:bold;color:#d9534f">
-      ⚠️ After sorting all 43 statements, click <b>“Submit to Qualtrics”</b> to record your results.
+      ⚠️ After sorting all 44 statements, click <b>“Submit to Qualtrics”</b> to record your results.
     </p>
   </div>
 
@@ -312,7 +312,7 @@ function downloadCSV(){
 
     const u=new URL(BASE);
     u.searchParams.set('pid',pid);
-    for(let i=1;i<=43;i++){
+    for(let i=1;i<=44;i++){
       const p=placements[String(i)];
       const r=(typeof p==='number')?scaleLabels[p]:'';
       u.searchParams.set('S'+i,r);
