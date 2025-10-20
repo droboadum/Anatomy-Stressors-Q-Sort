@@ -1,5 +1,7 @@
 # Anatomy Stressors Q-Sort (HTMLQ Implementation)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17401677.svg)](https://doi.org/10.5281/zenodo.17401677)
+
 This repository contains the full HTMLQ-based Q-sort application developed by **Oheneba Boadum (2025)** for the study:
 
 **"Perceptions of Anatomy-Related Stressors Among First-Year DO Students"**
