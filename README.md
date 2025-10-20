@@ -31,8 +31,7 @@ The specific anatomy-related statements and survey text remain the intellectual 
 
 If you use or adapt this repository, please cite:
 
-> **Boadum, O.** (2025). *Anatomy Stressors Q-Sort (HTMLQ implementation)* [Computer software]. GitHub. https://github.com/droboadum/Anatomy-Stressors-Q-Sort  
-> *(or DOI: https://doi.org/10.5281/zenodo.xxxxxxx once available)*
+> **Boadum, O.** (2025). *Anatomy Stressors Q-Sort (HTMLQ implementation)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17401677
 
 ---
 
