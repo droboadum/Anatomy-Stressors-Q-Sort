@@ -175,17 +175,34 @@ function el(t,a={},...c){const x=document.createElement(t);
 Object.entries(a).forEach(([k,v])=>{if(k==='class')x.className=v;else if(k==='html')x.innerHTML=v;else x.setAttribute(k,v)});c.forEach(ch=>x.append(ch));return x;}
 
 async function loadCSV(p){
-  const r=await fetch(p);
-  if(!r.ok)throw new Error('Cannot load statements.csv');
-  const txt=await r.text();
-  const rows=txt.trim().split(/\r?\n/);
-  const out=[];
+  const r = await fetch(p);
+  if(!r.ok) throw new Error('Cannot load statements.csv');
+  const txt = await r.text();
+  const rows = txt.trim().split(/\r?\n/);
+  const out = [];
   for(let i=1;i<rows.length;i++){
-    const line=rows[i];
-    const idx=line.indexOf(',');
-    const id=line.slice(0,idx).trim();
-    const text=line.slice(idx+1).trim();
-    if(id&&text)out.push({id,text});
+    const line = rows[i];
+    const idx = line.indexOf(',');
+    if(idx < 0) continue;
+    let id = line.slice(0, idx).trim();
+    const text = line.slice(idx+1).trim();
+
+    // Normalize: " 44", "044", "S44" -> "44"
+    const num = parseInt(id.replace(/\D+/g,''), 10);
+    if(!Number.isFinite(num)) continue;
+    id = String(num);
+
+    if(id && text) out.push({ id, text });
+  }
+
+  // Sanity check for missing IDs
+  const ids = out.map(o => parseInt(o.id,10)).sort((a,b)=>a-b);
+  const missing = [];
+  for(let k=1;k<=ids.length;k++){
+    if(!ids.includes(k)) missing.push(k);
+  }
+  if(missing.length){
+    alert('Warning: Missing statement IDs: ' + missing.join(', '));
   }
   return out;
 }
