@@ -322,20 +322,27 @@ function downloadCSV(){
   /* return to Qualtrics */
   const BASE="https://shsu.co1.qualtrics.com/jfe/form/SV_9mLZQw7T45q9bcW?return=1";
 
-  submitQualtricsBtn.onclick=()=>{
-    if(!allPlaced()){alert("Please place all cards first.");return;}
-    const pid=(pidInput.value||'').trim().toUpperCase();
-    if(!pid){alert("Enter Participant ID first.");return;}
+ submitQualtricsBtn.onclick = () => {
+  if(!allPlaced()){ alert("Please place all cards first."); return; }
+  const pid = (pidInput.value||'').trim().toUpperCase();
+  if(!pid){ alert("Enter Participant ID first."); return; }
 
-    const u=new URL(BASE);
-    u.searchParams.set('pid',pid);
-    for(let i=1;i<=44;i++){
-      const p=placements[String(i)];
-      const r=(typeof p==='number')?scaleLabels[p]:'';
-      u.searchParams.set('S'+i,r);
-    }
-    location.href=u.toString();
-  };
+  const u = new URL(BASE);
+  u.searchParams.set('pid', pid);
+
+  // Map S1..Sn using actual statement order
+  for(let i=0; i<statements.length; i++){
+    const s = statements[i];
+    const p = placements[s.id];
+    const r = (typeof p === 'number') ? scaleLabels[p] : '';
+    u.searchParams.set('S' + (i+1), r);
+  }
+
+  // Optional console check
+  console.log('Statements count:', statements.length);
+
+  location.href = u.toString();
+};
 })();
 </script>
 </body>
