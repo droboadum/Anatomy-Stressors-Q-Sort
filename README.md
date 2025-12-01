@@ -11,7 +11,7 @@ It integrates seamlessly with **Qualtrics** for participant identification (PID)
 
 ---
 
-## ⚙️ Features
+## Features
 - Fully browser-based Q-sort (no installation required)
 - Customizable `statements.csv` for your own research topics
 - Redirects to Qualtrics for pre/post-survey items
@@ -20,7 +20,7 @@ It integrates seamlessly with **Qualtrics** for participant identification (PID)
 
 ---
 
-## 🔁 Reuse and Adaptation
+## Reuse and Adaptation
 
 Researchers may adapt the *technical framework* (HTMLQ structure and Qualtrics integration) for their own Q-sort projects by replacing the study-specific statements with their own.
 
@@ -29,7 +29,7 @@ The specific anatomy-related statements and survey text remain the intellectual 
 
 ---
 
-## 📖 Citation
+## Citation
 
 If you use or adapt this repository, please cite:
 
@@ -37,7 +37,7 @@ If you use or adapt this repository, please cite:
 
 ---
 
-## 🧠 About the Study
+## About the Study
 
 This project was developed as part of an investigation into **anatomy-related stressors among first-year osteopathic medical students**, employing **Q-methodology** to explore subjective perceptions of learning stressors reported by Boadum et al. (2024).
 
@@ -45,12 +45,12 @@ The web app was built using **HTMLQ**, customized for integration with instituti
 
 ---
 
-## 📬 Contact
+## Contact
 
 **Author:**  
 Dr. Oheneba Boadum  
 Assistant Professor, Clinical Anatomy & Medical Education  
 Sam Houston State University College of Osteopathic Medicine  
-📧 droboadum@gmail.com  
+droboadum@gmail.com  
 
 ---
