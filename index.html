@@ -236,7 +236,9 @@ function attachDnD(){
     const card=document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
     if(card){pool.append(card);placements[id]='pool';updatePoolCount();refreshButtons();updateBadges();}
   });
-  document.querySelectorAll('.col').forEach((col,i)=>{
+  // Use each column's own scale index (data-col), not its on-screen position.
+  document.querySelectorAll('.col').forEach(col=>{
+    const i=Number(col.dataset.col);
     col.addEventListener('dragover',e=>{if(canDrop(i)){e.preventDefault();col.classList.add('dragover');}});
     col.addEventListener('dragleave',()=>col.classList.remove('dragover'));
     col.addEventListener('drop',e=>{
@@ -249,7 +251,8 @@ function attachDnD(){
 }
 
 function updateBadges(){
-  document.querySelectorAll('.col').forEach((col,i)=>{
+  document.querySelectorAll('.col').forEach(col=>{
+    const i=Number(col.dataset.col);
     const have=col.querySelectorAll('.card').length;const need=distribution[i];
     const b=col.querySelector('.badge');if(b)b.textContent=`${have}/${need}`;
   });
